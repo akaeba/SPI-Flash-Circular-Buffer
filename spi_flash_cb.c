@@ -240,7 +240,7 @@ int sfcb_init (t_sfcb *self, void *cb, uint8_t cbLen, void *spi, uint16_t spiLen
     /* SPI buffer needs at least space for one page and address and instruction */
     if ( (SFCB_FLASH_TOPO_PAGE_SIZE + SFCB_FLASH_TOPO_ADR_BYTE + 1) > self->uint16SpiMax ) {
         sfcb_printf("  ERROR:%s: spi buffer to small, is=%d byte, req=%d byte\n", __FUNCTION__, self->uint16SpiMax, SFCB_FLASH_TOPO_PAGE_SIZE + SFCB_FLASH_TOPO_ADR_BYTE + 1);
-        return SFCB_E_MEM;  // not enough SPI buffer to write at least one complete page to flash
+        return SFCB_E_MEM_RAM;  // not enough SPI buffer to write at least one complete page to flash
     }
     /* init circular buffer handles */
     for ( uint8_t i = 0; i < (self->uint8NumCbs); i++ ) {
@@ -713,7 +713,7 @@ void sfcb_worker (t_sfcb *self)
 
 /**
  *  sfcb_flash_size
- *    total flashsize
+ *    total flash size
  */
 uint32_t sfcb_flash_size (void)
 {
@@ -749,7 +749,7 @@ int sfcb_new_cb (t_sfcb *self, uint32_t magicNum, uint16_t elemSizeByte, uint16_
     }
     if ( cbNew == (self->uint8NumCbs) ) {
         sfcb_printf("  ERROR:%s:sfcb_cb exceeded total available number of %i cbs\n", __FUNCTION__, (self->uint8NumCbs));
-        return SFCB_E_MEM;  // no free circular buffer slots, allocate more memory in #t_sfcb_cb table
+        return SFCB_E_MEM_RAM;  // no free circular buffer slots, allocate more memory in #t_sfcb_cb table
     }
     /* prepare slot */
     (self->ptrCbs[cbNew]).uint8Used = 1;        // occupied
@@ -767,7 +767,7 @@ int sfcb_new_cb (t_sfcb *self, uint32_t magicNum, uint16_t elemSizeByte, uint16_
     /* check if stop sector is in total size */
     if ( ((self->ptrCbs[cbNew]).uint32StopSector+1) * SFCB_FLASH_TOPO_SECTOR_SIZE > SFCB_FLASH_TOPO_FLASH_SIZE ) {
         sfcb_printf("  ERROR:%s flash size exceeded\n", __FUNCTION__);
-        return SFCB_E_FLASH_FULL;   // Flash capacity exceeded
+        return SFCB_E_MEM_FLASH;    // Flash capacity exceeded
     }
     /* print slot config */
     sfcb_printf("  INFO:%s:ptrCbs[%i]_p                     = %p\n",   __FUNCTION__, cbNew, (&self->ptrCbs[cbNew]));
@@ -776,7 +776,7 @@ int sfcb_new_cb (t_sfcb *self, uint32_t magicNum, uint16_t elemSizeByte, uint16_
     sfcb_printf("  INFO:%s:ptrCbs[%i].uint32StartSector     = 0x%x\n", __FUNCTION__, cbNew, (self->ptrCbs[cbNew]).uint32StartSector);
     sfcb_printf("  INFO:%s:ptrCbs[%i].uint32StopSector      = 0x%x\n", __FUNCTION__, cbNew, (self->ptrCbs[cbNew]).uint32StopSector);
     sfcb_printf("  INFO:%s:ptrCbs[%i].uint16NumEntriesMax   = %d\n",   __FUNCTION__, cbNew, (self->ptrCbs[cbNew]).uint16NumEntriesMax);
-    /* succesfull */
+    /* successful */
     return SFCB_OK;
 }
 
@@ -789,9 +789,9 @@ int sfcb_new_cb (t_sfcb *self, uint32_t magicNum, uint16_t elemSizeByte, uint16_
 int sfcb_busy (t_sfcb *self)
 {
     if ( 0 != self->uint8Busy ) {
-        return -1;  // busy
+        return SFCB_E_WKR_BSY;  // busy
     }
-    return 0;
+    return SFCB_OK;
 }
 
 
@@ -887,8 +887,8 @@ int sfcb_add (t_sfcb *self, uint8_t cbID, void *data, uint16_t len)
     }
     /* check for match into circular buffer size */
     if ( (len + ((self->ptrCbs)[cbID]).uint16PlFlashOfs) > (((self->ptrCbs)[cbID]).uint16NumPagesPerElem * SFCB_FLASH_TOPO_PAGE_SIZE) ) {
-        sfcb_printf("  ERROR:%s: data segement is larger then reserved circular buffer space\n", __FUNCTION__);
-        return SFCB_E_MEM;  // data segement is larger then reserved circular buffer space
+        sfcb_printf("  ERROR:%s: data segment is larger then reserved circular buffer space\n", __FUNCTION__);
+        return SFCB_E_MEM_RAM;  // data segment is larger then reserved circular buffer space
     }
     /* store information for insertion */
     self->uint8IterCb = cbID;   // used as pointer to queue
@@ -903,7 +903,7 @@ int sfcb_add (t_sfcb *self, uint8_t cbID, void *data, uint16_t len)
     self->stage = SFCB_STG00;
     self->error = SFCB_E_NOERO;
     /* fine */
-    return 0;
+    return SFCB_OK;
 }
 
 

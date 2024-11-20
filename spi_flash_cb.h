@@ -28,10 +28,10 @@
  *  @{
  */
 #define SFCB_OK             (0)     /**< Request accepted */
-#define SFCB_E_NO_FLASH     (1<<0)  /**< no flash type selected, use proper compile switch */
-#define SFCB_E_MEM          (1<<1)  /**< not enough memory to perform the desired interaction */
-#define SFCB_E_FLASH_FULL   (1<<2)  /**< Flash capacity exceeded */
-#define SFCB_E_WKR_BSY      (1<<3)  /**< SFCB is busy with processing last request, wait. */
+#define SFCB_E_WKR_BSY      (1<<0)  /**< SFCB is busy with processing last request, wait. */
+#define SFCB_E_NO_FLASH     (1<<1)  /**< no flash type selected, use proper compile switch */
+#define SFCB_E_MEM_RAM      (1<<2)  /**< not enough memory (RAM) to perform the desired interaction */
+#define SFCB_E_MEM_FLASH    (1<<3)  /**< Not enough memory in SPI flash */
 #define SFCB_E_NO_CB_Q      (1<<4)  /**< circular buffer queue not active or present */
 #define SFCB_E_WKR_REQ      (1<<5)  /**< Circular Buffer is not prepared for request, run #sfcb_worker */
 #define SFCB_E_CB_Q_MTY     (1<<6)  /**< Circular buffer queue has no valid entries */
@@ -226,8 +226,9 @@ typedef struct t_sfcb
  *  @param[in,out]  *spi                pointer to uint8_t SPI interaction buffer, buffer between SPI core and flash driver
  *  @param[in]      spiLen              maximum number of elements in buffer => size in byte
  *  @return         int                 state
- *  @retval         0                   OKAY
- *  @retval         1                   Invalid Flash Type
+ *  @retval         #SFCB_OK            @see #SFCB_E
+ *  @retval         #SFCB_E_NO_FLASH    @see #SFCB_E
+ *  @retval         #SFCB_E_MEM_RAM     @see #SFCB_E
  *  @since          2022-07-25
  *  @author         Andreas Kaeberlein
  */
@@ -242,7 +243,7 @@ int sfcb_init (t_sfcb *self, void *cb, uint8_t cbLen, void *spi, uint16_t spiLen
  *  Executes request from #sfcb_mkcb,
  *
  *  @param[in,out]  self                handle, #t_sfcb
- *  @return         void                state
+ *  @return         void
  *  @since          2022-07-27
  *  @author         Andreas Kaeberlein
  */
@@ -274,8 +275,9 @@ uint32_t sfcb_flash_size (void);
  *  @param[in]      numElems            minimal number of elements in the circular buffer, through need of sector erase and not deleting all data can be this number higher then requested
  *  @param[in,out]  *cbID               Circular buffer number
  *  @return         int                 state
- *  @retval         0                   OKAY
- *  @retval         1                   No free circular buffer slots, allocate more static memory
+ *  @retval         #SFCB_OK            @see #SFCB_E
+ *  @retval         #SFCB_E_MEM_RAM     @see #SFCB_E
+ *  @retval         #SFCB_E_MEM_FLASH   @see #SFCB_E
  *  @since          2022-07-25
  *  @author         Andreas Kaeberlein
  */
@@ -290,8 +292,8 @@ int sfcb_new_cb (t_sfcb *self, uint32_t magicNum, uint16_t elemSizeByte, uint16_
  *
  *  @param[in,out]  self                handle, #t_sfcb
  *  @return         int                 state
- *  @retval         0                   idle
- *  @retval         1                   busy
+ *  @retval         #SFCB_OK            idle
+ *  @retval         #SFCB_E_WKR_BSY     busy
  *  @since          2022-07-29
  *  @author         Andreas Kaeberlein
  */
@@ -320,9 +322,9 @@ uint16_t sfcb_spi_len (t_sfcb *self);
  *
  *  @param[in,out]  self                handle, #t_sfcb
  *  @return         int                 state
- *  @retval         0                   Request accepted
- *  @retval         1                   Not Free for new Requests, wait
- *  @retval         2                   no active queue, add via #spi_flash_cb_add
+ *  @retval         #SFCB_OK            @see #SFCB_E
+ *  @retval         #SFCB_E_WKR_BSY     @see #SFCB_E, wait
+ *  @retval         #SFCB_E_NO_CB_Q     @see #SFCB_E, add via #spi_flash_cb_add
  *  @since          2022-07-27
  *  @author         Andreas Kaeberlein
  */
@@ -344,11 +346,11 @@ int sfcb_mkcb (t_sfcb *self);
  *  @param[in]      *data               Pointer to data array which should add
  *  @param[in]      len                 size of *data in bytes
  *  @return         int                 state
- *  @retval         #SFCB_OK            Request accepted.
- *  @retval         #SFCB_E_WKR_BSY     Worker is busy, wait for processing last job.
- *  @retval         #SFCB_E_NO_CB_Q     Circular buffer queue not active or present.
- *  @retval         #SFCB_E_WKR_REQ     Circular Buffer is not prepared for request, run #sfcb_worker.
- *  @retval         #SFCB_E_MEM         Not enough memory to perform the desired interaction.
+ *  @retval         #SFCB_OK            @see #SFCB_E
+ *  @retval         #SFCB_E_WKR_BSY     @see #SFCB_E, wait for processing last job.
+ *  @retval         #SFCB_E_NO_CB_Q     @see #SFCB_E, add via #spi_flash_cb_add
+ *  @retval         #SFCB_E_WKR_REQ     @see #SFCB_E, not prepared for request - run #sfcb_worker.
+ *  @retval         #SFCB_E_MEM_RAM     @see #SFCB_E, data segment bigger then circular buffer element.
  *  @since          2023-09-13
  *  @author         Andreas Kaeberlein
  */
