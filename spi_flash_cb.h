@@ -31,10 +31,10 @@
 #define SFCB_E_NO_FLASH     (1<<0)  /**< no flash type selected, use proper compile switch */
 #define SFCB_E_MEM          (1<<1)  /**< not enough memory to perform the desired interaction */
 #define SFCB_E_FLASH_FULL   (1<<2)  /**< Flash capacity exceeded */
-#define SFCB_E_WKR_BSY      (1<<3)  /**< Worker is Busy, wait for processing last job. */
+#define SFCB_E_WKR_BSY      (1<<3)  /**< SFCB is busy with processing last request, wait. */
 #define SFCB_E_NO_CB_Q      (1<<4)  /**< circular buffer queue not active or present */
 #define SFCB_E_WKR_REQ      (1<<5)  /**< Circular Buffer is not prepared for request, run #sfcb_worker */
-#define SFCB_E_CB_Q_MTY     (1<<6)  /**< Cirular buffer queue has no valid entries */
+#define SFCB_E_CB_Q_MTY     (1<<6)  /**< Circular buffer queue has no valid entries */
 /** @} */   // SFCB_E
 
 
@@ -98,7 +98,7 @@ typedef enum
  *
  *  @brief  Errors
  *
- *  Ocured Erros while driver execution
+ *  Occurred errors while driver execution
  *
  *  @since  2022-12-08
  *  @author Andreas Kaeberlein
@@ -111,6 +111,13 @@ typedef enum
 } t_sfcb_error;
 
 
+
+
+/**
+ *  @defgroup SFCB_DATA
+ *  SFCB data structures
+ *  @{
+ */
 
 /**
  *  @typedef spi_flash_cb_elem_head
@@ -197,7 +204,16 @@ typedef struct t_sfcb
     uint32_t                uint32LastElemNum;  /**< Temporary variable to store queue element id of last successful written element */
 } t_sfcb;
 
+/** @} */   // SFCB_DATA
 
+
+
+
+/**
+ *  @defgroup SFCB_API
+ *  Functions for interaction
+ *  @{
+ */
 
 /**
  *  @brief init
@@ -446,6 +462,8 @@ uint32_t sfcb_idmax (t_sfcb *self, uint8_t cbID);
  *  @author         Andreas Kaeberlein
  */
 int sfcb_isero (t_sfcb *self);
+
+/** @} */   // SFCB_API
 
 
 
